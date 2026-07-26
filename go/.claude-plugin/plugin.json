@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
-  "name": "operating-directives",
+  "name": "go",
   "displayName": "Operating Directives",
   "description": "Rigorous, project-agnostic slash-command directives for Claude Code: engineering (/codethis), debugging (/fixthis), read-only code audit (/auditthis), and research (/researchthis).",
   "author": {
