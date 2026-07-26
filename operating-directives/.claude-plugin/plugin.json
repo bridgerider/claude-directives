@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "operating-directives",
+  "displayName": "Operating Directives",
+  "description": "Rigorous, project-agnostic slash-command directives for Claude Code: engineering (/codethis), debugging (/fixthis), read-only code audit (/auditthis), and research (/researchthis).",
+  "author": {
+    "name": "bridgerider",
+    "url": "https://github.com/bridgerider"
+  },
+  "homepage": "https://github.com/bridgerider/claude-directives",
+  "repository": "https://github.com/bridgerider/claude-directives",
+  "keywords": ["directives", "engineering", "debugging", "code-audit", "research", "workflow", "slash-commands"]
+}

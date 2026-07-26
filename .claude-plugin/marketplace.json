@@ -1,0 +1,14 @@
+{
+  "name": "claude-directives",
+  "owner": {
+    "name": "bridgerider",
+    "url": "https://github.com/bridgerider"
+  },
+  "plugins": [
+    {
+      "name": "operating-directives",
+      "source": "./operating-directives",
+      "description": "Four project-agnostic slash commands — /codethis (engineering), /fixthis (debugging), /auditthis (read-only code audit), /researchthis (research). Omits version, so every commit ships to users on /plugin marketplace update."
+    }
+  ]
+}
