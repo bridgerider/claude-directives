@@ -69,6 +69,11 @@ Fix the bug above under this directive. A fix that hides the symptom, that you c
 
 - Maintain a dedicated, **persistent GATING list** in the project's `memory/gating.md` (create it on the first gating item, update it in place — it must survive session end and context compaction): anything blocking full resolution that you can't clear now (can't reproduce, needs data/access/credentials, needs a decision, deferred sibling bugs, upstream dependency).
 - Scaffold around each where possible, make the unresolved path **fail loudly** (never a silent no-op or fake success), and keep the list current — added on discovery, cleared when resolved, never silently forgotten. This is the source of truth for what still blocks a clean fix.
+- **Keep the file organized into exactly two sections — `## OPEN` first, then `## RESOLVED`** — so a reader sees live blockers up top and closed ones never clutter them. Every item is its own `### <ID> — <headline>` block filed under one of those two headings; those are the only two top-level (`##`) sections in the file.
+  - **New item** → add it under `## OPEN`, newest at the top of the section.
+  - **When you clear one, MOVE it, don't relabel it in place:** cut the whole block — text preserved verbatim — out of `## OPEN` and append it to the end of `## RESOLVED`. A gate counts as closed (fixed / done / won't-fix / superseded) even if it carries documented residuals; capture any still-live successor as its **own new** item under `## OPEN`, never by keeping the parent open.
+  - **Still actionable** (needs a decision, a build, an operator go/no-go, or is parked/deferred) → it stays under `## OPEN`.
+  - One ID lives in exactly one section — never duplicated across both, never left at `##`/top level outside the two sections.
 
 ## 9. Above all
 
