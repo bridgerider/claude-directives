@@ -50,10 +50,76 @@ linter, typechecker, test suite, build — in **read-only** fashion (no fixes,
 no config changes). Don't hand-audit what a tool proves in seconds.
 - Tool output is evidence: findings confirmed by a failing tool run enter
   the report as CONFIRMED with the output quoted.
-- If a standard check can't run (missing deps, no test runner, credentials),
-  say so in the coverage statement and log it to memory/gating.md.
+- **Try before you log it.** "The command wasn't on PATH" is not a
+  coverage gap, it's a wrong invocation. Within read-only means: find the
+  project's actual test/lint/build command (CLAUDE.md, README, CI config,
+  package.json scripts, Makefile, pyproject/tox), run it from the correct
+  working directory, and use the toolchain or venv the project already
+  has. Most "can't run" is the wrong incantation, not a missing capability.
+- Only when that genuinely fails is it a coverage gap: name it in the
+  coverage statement, and log it to memory/gating.md only if clearing it
+  needs something you cannot supply here — a credential, an environment,
+  or an install this read-only audit is not permitted to perform (§8).
+  **Never** install, change config, or edit source to make a check run.
 
-## 4. Audit — scaled to blast radius
+## 4. Parallel auditing with subagents — use them, under these rules
+
+This directive is **read-only**, so it is the safest possible place to
+fan out: no agent writes source, so agents cannot collide on it. Breadth
+is the only real constraint on an audit's quality, and subagents are how
+you buy breadth. Spawning them (the Agent tool, /code-review, or the
+equivalent available to you) is **encouraged, not merely tolerated.**
+
+**Spawn for:**
+- **Coverage** — one agent per subsystem, module, or blast-radius tier
+  (§5), so the deep tier gets real depth instead of whatever attention
+  is left after skimming everything else.
+- **The sibling hunt (§5)** — one agent per confirmed defect pattern,
+  searching the whole codebase. This is the highest-value fan-out here:
+  it is what turns a specimen into the pack.
+- **Refutation (§6)** — a fresh-context agent per error-severity finding,
+  briefed to *break* it. The context that found a defect is biased
+  toward believing it.
+- **Convention loading (§2)** — reading scattered CLAUDE.md files, prior
+  audit reports, and domain context in parallel.
+
+**Do not spawn for:** the severity calls, the coverage statement, or the
+report itself — those are one author's job, and a report assembled from
+agents that never spoke to each other is a list, not an audit.
+
+**Hard rules:**
+
+1. **Every agent is READ-ONLY on source. No exceptions.** This command
+   changes no code (see the header). A throwaway repro is allowed exactly
+   as §6 allows it — outside the source tree, discarded after — and each
+   agent gets its own scratch prefix so two of them never overwrite one
+   another's repro or output file.
+2. **A subagent's claim is not evidence, and this directive already has
+   the vocabulary for that:** a finding may enter the report as
+   **CONFIRMED** only if the agent returns the actual run, the failing
+   tool output, or the traced end-to-end path. Anything else is
+   **PLAUSIBLE** at best, no matter how confident the agent sounds.
+   Re-run it yourself to promote it.
+3. **Require file:line and the concrete failure scenario** from every
+   agent — the same bar §6 sets for you. An agent finding without them
+   doesn't go in the report; it goes back for evidence or gets dropped.
+4. **Never let a subagent write shared state** — the report,
+   memory-cowork.md, memory/gating.md, or any project file. Agents
+   **return findings to you**; you are the sole writer.
+5. **Deduplicate before reporting.** Overlapping scopes mean two agents
+   will find the same defect; report it once. And note that N agents
+   flagging one line is **one finding**, not corroboration — agreement
+   between agents reading the same code is not independent evidence.
+6. **Brief each agent completely:** its scope, the standards from §2 it
+   must audit against, its scratch prefix, what to return and in what
+   shape, and that **finding nothing is a valid and useful answer.** An
+   agent that must justify its existence will manufacture findings, and
+   §6 exists to catch exactly that.
+7. **Bound the fan-out** to what you can actually reconcile, and
+   reconcile every result. Contradictions between agents are a signal to
+   look yourself, never something to average out.
+
+## 5. Audit — scaled to blast radius
 
 Scrutiny depth follows blast radius, not file order:
 
@@ -84,7 +150,7 @@ Check for:
 search for the same pattern — bugs of a kind travel in packs. Report the
 pack, not the specimen.
 
-## 5. Verify findings before reporting
+## 6. Verify findings before reporting
 
 **Evidence over assertion — a finding you can't defend is noise, not signal.**
 - Every error-severity finding must state its **concrete failure scenario**:
@@ -108,7 +174,7 @@ pack, not the specimen.
 - Drop or downgrade anything that survives neither. Three defensible errors
   outrank thirty maybes.
 
-## 6. Report
+## 7. Report
 
 - Categorize by severity: **error / warning / suggestion**, most severe
   first. Counts up front. For each finding: file:line, issue, concrete
@@ -124,13 +190,28 @@ pack, not the specimen.
   when partial, e.g. 2026-07-13_code-audit_b03-seo.md). Never overwrite an
   existing report — append _v2, _v3.
 
-## 7. Update session memory
+## 8. Update session memory
 
 - Append audit summary to memory-cowork.md: scope, severity counts,
   report path, and any gating items logged.
-- New blockers discovered (unrunnable tests, missing deps/credentials) go
-  to the project's persistent **memory/gating.md** — created on first item,
-  updated in place so it survives session end and context compaction; never
-  silently dropped.
+- **Audit findings are not gating items.** A defect you found belongs in
+  the report and routes to /fixthis; parking it in gating.md hides it from
+  the person who asked for the audit. Only a **blocker to auditing** goes
+  there — and only after §3's try-before-you-log step, and only when
+  clearing it needs something you cannot supply: a credential, an
+  environment, an install this read-only command may not perform, or a
+  decision only I can make. "Would have taken a while to read" is not a
+  blocker; it is a coverage-statement entry at worst.
+- Legitimate blockers go to the project's persistent **memory/gating.md**
+  — created on first item, updated in place so it survives session end and
+  context compaction; never silently dropped. Record what you tried, the
+  one thing that would clear it, and who supplies that thing.
+- **Keep that file in exactly two sections — `## OPEN` first, then
+  `## RESOLVED`** — the only two top-level (`##`) headings in it. Each item
+  is its own `### <ID> — <headline>` block under one of them, newest OPEN
+  at the top. When one clears, **MOVE it rather than relabel it**: cut the
+  block, text preserved verbatim, from `## OPEN` to the end of
+  `## RESOLVED`; any still-live successor becomes its **own new** OPEN
+  item. One ID lives in exactly one section.
 - Close by offering routes, not actions: /fixthis per error finding,
   /simplify for the cleanup tier. Make no changes yourself.

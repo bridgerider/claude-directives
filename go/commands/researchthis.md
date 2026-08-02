@@ -45,9 +45,27 @@ Rank every source by how close it sits to the origin of the fact. Cite the highe
 - **Follow citation chains both directions:** what a key source cites (backward, toward its primaries) and what cites it (forward, toward replications, corrections, and rebuttals). This is how you reach the origin and how you learn whether it still stands.
 - **Search adversarially.** Actively hunt for the strongest disconfirming evidence and the best counter-case — not just what confirms the first answer you found. If you only searched for support, you haven't finished.
 - **Loop until dry.** Keep going until further searching stops surfacing new primary sources or materially new information. State where you stopped and why — never present an early stop as exhaustive.
-- Parallelize with research subagents where sub-questions are genuinely independent (different angles, source types, or entities). Each returns *sourced* findings; you remain the single synthesizer and own the integrated citation chain.
+- **Parallelize the sweep** — a multi-angle search is exactly what subagents are for, and it is how "loop until dry" stays affordable. See Section 5 for what to spawn and the rules that keep parallel research from manufacturing false confidence.
 
-## 5. Vet every source before you trust it
+## 5. Parallel research with subagents — use them, under these rules
+
+Research is read-only and breadth-bound, which makes it the ideal fan-out: several agents sweeping different angles, source types, and entities at once is how Section 4's "loop until dry" stays affordable instead of becoming an early stop dressed up as exhaustive. Spawning them (the Agent tool or the equivalent available to you) is **encouraged, not merely tolerated.**
+
+**Spawn for:** independent sub-questions from Section 1; one agent per **source type** (primary literature, official/regulatory, court and corporate filings, raw data, reputable news) so no angle is skipped; one per entity, jurisdiction, or period in a comparison; citation-chain walks in both directions (Section 4); the adversarial hunt for the strongest disconfirming case; and the **fresh-context citation audit** that Section 9 requires for high-stakes topics.
+
+**Do not spawn for:** the synthesis, the confidence labels, or the report. You remain the **single synthesizer** and own the integrated citation chain — a report stitched from agents that never read each other's evidence has no coherent chain, only a pile of quotes.
+
+**Hard rules — the first two are the ones that matter most here:**
+
+1. **Anti-fabrication binds every agent, not just you.** Section 9's zero tolerance for invented sources applies in full to delegated work: no agent may return a source, URL, DOI, title, author, date, page, quote, or figure it did not actually retrieve and read. Require each finding to arrive with its **full locator and a verbatim quote** of the load-bearing passage. **Spot-check agent citations by opening them yourself** — at minimum every claim that carries a conclusion. An unopened agent citation is not a source you have; it is a source you have been told about, and the cardinal rule forbids asserting it.
+2. **Agreement between agents is not corroboration.** Section 7's insight applies with full force inside your own fan-out: three agents returning the same fact is **not** three independent sources — they may have found the same origin, or the same aggregator quoting it. Trace every repeated claim to its origin before it earns a confidence bump. Counting agents instead of origins is the fastest way to manufacture ESTABLISHED out of a single press release.
+3. **Every agent is READ-ONLY**, and **none may write shared state** — the report, `memory-cowork.md`, `memory/gating.md`, or any project file. Agents **return sourced findings to you**; you are the sole writer. Give each its own scratch prefix so parallel notes and downloads never overwrite one another.
+4. **A subagent's summary is not evidence.** Require the source itself, not the agent's characterization of it — Section 4's "read the source, not the snippet" applies to agent output exactly as it applies to a search result. An agent's paraphrase is one more layer between you and the primary, and Section 2 forbids laundering a claim through a summary.
+5. **Brief each agent completely:** its sub-question, which source types and rungs are in scope, its scratch prefix, the locator detail required, and that **"I found no reliable source for this" is a valid, valuable, and expected answer.** An agent that feels it must return something will return something — and in research that failure mode is fabrication, not silence. Section 8 makes this explicit: absence of evidence is reported as absence.
+6. **Reconcile every result, and treat contradiction as a finding.** Where two agents disagree, go to the sources yourself and resolve it — that conflict is often the most informative thing in the sweep (Section 7 requires surfacing it, not smoothing it). Never average, and never pick the more convenient answer.
+7. **Bound the fan-out** to what you can actually verify. More agents than you can spot-check is not more research; it is more unverified text.
+
+## 6. Vet every source before you trust it
 
 For each source that carries weight, establish:
 
@@ -57,14 +75,14 @@ For each source that carries weight, establish:
 - **Currency:** current, superseded, or retracted? Check for a newer edition, a correction, a retraction notice, or figures a later release revised.
 - **Standards:** peer review, editorial oversight, disclosed and sound methodology. For studies: sample size, method, pre-registration, conflicts, and whether it replicated.
 
-## 6. Corroborate — and don't mistake echo for confirmation
+## 7. Corroborate — and don't mistake echo for confirmation
 
 - **Independent corroboration is the goal.** A fact confirmed by multiple *independent* primary sources is strong; the same claim repeated by fifty outlets all tracing back to one origin is **a single source wearing a crowd's clothing.** Trace repeated claims to their common origin before counting them as agreement.
 - Distinguish genuine consensus from a citation cascade, a manufactured PR echo, or a single dataset everyone reuses. **Weight by independence and evidence quality — never by volume or popularity.**
 - **Surface disagreement; don't paper over it.** Where credible sources conflict, present the conflict, the evidence on each side, and the likely reason for it — don't silently pick a winner. Note minority and dissenting expert views where they exist.
 - Flag any claim you can stand up on only **one** source as exactly that.
 
-## 7. Handle uncertainty and gaps honestly
+## 8. Handle uncertainty and gaps honestly
 
 - **Calibrate and label confidence** on load-bearing claims:
   - **ESTABLISHED** — multiple independent primary sources agree.
@@ -75,14 +93,14 @@ For each source that carries weight, establish:
 - **Never fill a gap with a plausible guess.** "I could not find a reliable source for X" is a complete, valuable, and *required* answer — vastly better than a confident fabrication. Absence of evidence is reported as absence, not smoothed over.
 - State the limits of the search explicitly: what you couldn't access (paywalls, unavailable primaries, non-English sources), what remains open, and where the evidence is thin or dated.
 
-## 8. Red-team the findings before you report
+## 9. Red-team the findings before you report
 
 - **Attempt to refute your own conclusions.** Steelman the opposing case; look specifically for cherry-picked evidence, confirmation bias, over-reliance on one source, correlation mistaken for causation, misread statistics (base rates, denominators, selection effects), quotes lifted out of context, and superseded or retracted data.
 - **Verify every citation says what you claim it says.** Re-open each load-bearing source and confirm the quote is verbatim and the claim is actually supported — not a summary's spin on it. Misattribution and drift do as much damage as fabrication.
 - **Zero tolerance for invented sources.** Never fabricate or guess a source, URL, DOI, title, author, date, page number, quote, or statistic. Every citation must be one you actually retrieved and read. If you cannot confirm a source exists as cited, it does not go in the report.
 - For **high-stakes** topics (money, legal, medical, safety, reputational, or anything driving a real decision): have a **fresh-context reviewer** (a subagent with no research-authoring context) independently audit the citation chain and try to break the strongest claims. The context that did the research is biased toward believing it; cost is never a reason to skip this.
 
-## 9. Synthesize and report
+## 10. Synthesize and report
 
 Structure the deliverable:
 
@@ -95,12 +113,35 @@ Structure the deliverable:
 - Keep **attributed fact and your own inference visibly separated** throughout — never let synthesis read as if it were sourced.
 - Match precision to the domain: for finance, legal, medical, and data questions, follow the relevant `_context/domains.md` standards (cite the filing / statute / study / dataset directly; report figures with units and as-of dates).
 
-## 10. Open threads & gating items
+## 11. Open threads & gating items — the last resort, not the pressure valve
 
-- Maintain a **persistent open-threads list** for anything blocking a complete answer that you couldn't clear this session: paywalled or unavailable primaries, sources needing credentials/access, sub-questions still unanswered, claims that couldn't be corroborated, leads not yet run down. Record it in the project's `memory/gating.md` (create on first item, update in place — it must survive session end and context compaction).
-- Never silently drop an open thread. An honestly-incomplete answer with its gaps named outranks a falsely-complete one.
+**Default: run it down.** Section 4 says loop until dry; this section must not hand back the escape hatch Section 4 just closed. **A lead not yet run down is not an open thread — it is unfinished searching**, and Section 5 exists so that breadth is never the reason to stop. The same goes for a sub-question you simply haven't worked yet. "Hard to find", "would take more searching", "the primary is long" are not gates; they are the task.
 
-## 11. Persist the work
+Two things that look like gates but are not, and must be handled by the machinery built for them:
+
+- **A claim you couldn't corroborate** is a **finding**, not a blocker — label it `SINGLE-SOURCE`, `UNVERIFIED`, or `CONTESTED` per Section 8 and keep it in the report where the reader can see it. Moving it to `gating.md` removes it from the answer, which is strictly worse: it hides the limitation from the person who asked.
+- **A gap you genuinely could not fill** is likewise reported, per Section 8 — "I could not find a reliable source for X" is a complete and required answer, stated in the report, not parked elsewhere.
+
+**A gate is legitimate only when clearing it requires something you cannot supply** — specifically one of:
+
+1. **Access you don't have** — a paywalled primary, a subscription database, an archive requiring credentials, a document available only on request.
+2. **An external party** — a source who must respond, an institution that must release the record, a FOIA-style request with a turnaround.
+3. **A decision only I can make** — how far to take a costly line of inquiry, or whether a paywalled source is worth buying.
+4. **A deferral I explicitly approved** in this session.
+
+If none of those four apply, it is not a gate. Go and read it.
+
+**Prefer asking over filing.** If I am in the session and the blocker is (1) or (3) — a paywall I can open, a database I have a login for, a call on whether to spend — ask me directly rather than filing it. Most access gates in practice are one question away from being cleared.
+
+**Every filed item must carry three things:** what you actually tried (which sources, which query framings, which chains you walked) and why each failed; the **single specific** thing that would clear it; and who or what supplies that thing. An item missing any of the three is a shrug, not a gate — and in research it is worse, because it reads as diligence while hiding that nobody looked.
+
+For whatever legitimately remains:
+
+- Record it in the project's `memory/gating.md` (create on first item, update in place — it must survive session end and context compaction).
+- **Keep that file in exactly two sections — `## OPEN` first, then `## RESOLVED`** — the only two top-level (`##`) headings in it. Every item is its own `### <ID> — <headline>` block under one of them, newest OPEN at the top. When one clears, **MOVE it rather than relabel it in place**: cut the block, text preserved verbatim, out of `## OPEN` and append it to the end of `## RESOLVED`; capture any still-live successor as its **own new** OPEN item. One ID lives in exactly one section.
+- Never silently drop an open thread. **An honestly-incomplete answer with its gaps named outranks a falsely-complete one** — but an answer whose gaps are all things you simply didn't go and read is neither honest nor incomplete; it is unfinished.
+
+## 12. Persist the work
 
 - Save the report to `<project-dir>/output/YYYY-MM-DD_research_{slug}.md` (never overwrite — append `_v2`, `_v3`). For a recurring topic, keep a living file under `research/{topic-slug}/` or distill durable findings into `memory/research-{topic}.md` per project convention.
 - Append a summary to `memory-cowork.md`: the question, the bottom-line answer, its confidence, source count and highest rung reached, the report path, and any open threads logged to gating.

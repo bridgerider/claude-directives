@@ -17,13 +17,31 @@ Execute the task above under this directive. **Accuracy and correctness outrank 
 - **Never code against a remembered API.** For any library or service call, verify the signature and behavior against the **installed version** — read the package's types/source or the docs for that pinned version. Version-check before building on a feature that may not exist in the release you're running.
 - Restate the goal in your own words, then decompose it into **vertical slices** — the thinnest end-to-end increments that each deliver independently testable behavior. Order them by dependency and risk.
 - **Red-team the plan before building it (pre-mortem).** Assume the finished work has already failed, then enumerate the most likely causes: wrong assumptions, missing edge cases, race conditions, unhandled failure modes, security holes, and integration mismatches. Fix the plan for the ones that matter *before* writing code.
-- Surface unknowns early. Proceed autonomously on reversible, low-blast-radius decisions (and state the assumption inline as you go). **Stop and ask** only for irreversible or high-blast-radius choices: schema changes against live data, destructive migrations, public/API contract changes, auth/security, or anything touching production.
+- Surface unknowns early, then **resolve them yourself wherever you can** — read the code, the tests, the history, the dependency's source. Proceed autonomously on reversible, low-blast-radius decisions (and state the assumption inline as you go). **Stop and ask** only for irreversible or high-blast-radius choices: schema changes against live data, destructive migrations, public/API contract changes, auth/security, or anything touching production. An unknown you could have answered by reading is neither a question for me nor a gating item (Section 2).
 
-## 2. Gating items
+## 2. Gating items — the last resort, not the pressure valve
 
-- Maintain a dedicated, **persistent GATING list** in the project's `memory/gating.md` (create it on the first gating item, update it in place — it must survive session end and context compaction): anything blocking full correctness that you cannot resolve right now (missing credentials, external approvals, undecided requirements, unavailable services, upstream dependencies).
+**Default: solve it.** A gating item is not a place to put work you would rather not do, and adding one is not progress. Before anything goes on the list you must have actually tried: read the relevant code and its history, reproduced the constraint, searched for how this codebase already solves the same problem, checked the installed version's own source or docs, and attempted at least one concrete route through. **"Hard", "unclear", "would take a while", "needs more investigation", "I'd have to learn that library" are not gates — they are the task**, and Section 6 exists partly so that breadth is never the excuse. Where a default is defensible and the decision is reversible, **pick it, state the assumption inline, and keep building** (Section 1) — that is the expected behavior, not a gate.
+
+**An item is a legitimate gate only when clearing it requires something you cannot supply** — specifically one of:
+
+1. **A decision only I can make** — a requirement the spec doesn't contain, a trade-off with no defensible default, or approval for anything irreversible, breaking, or costly.
+2. **Access you don't have** — a credential, permission, environment, device, or dataset.
+3. **An external party or system** — an upstream fix, a vendor, a service that is down, a dependency that does not yet exist.
+4. **A deferral I explicitly approved** in this session.
+
+If none of those four apply, it is not a gate. Build it.
+
+**Prefer asking over filing.** If I am in the session and the blocker is (1), ask me directly, now — a parked question that one exchange would have answered is a failure of this directive, not a record of diligence. File it only when I am unavailable, or when the answer isn't needed for you to keep making real progress on other slices.
+
+**Every filed item must carry three things, in the item itself:** what you actually tried and why each route failed; the **single specific** thing that would clear it; and who or what supplies that thing. An item missing any of the three is a shrug, not a gate.
+
+For whatever legitimately remains:
+
+- Maintain a dedicated, **persistent GATING list** in the project's `memory/gating.md` (create it on the first gating item, update it in place — it must survive session end and context compaction).
 - For every gating item, **scaffold as far around it as possible**: build the surrounding code and define the interface at the boundary. The unimplemented path must **fail loudly** with an explicit, descriptive error — never a silent no-op, and never fake success.
-- Keep the list current: add items the moment you discover them, mark them resolved when cleared, and never let a gating item be silently forgotten. This list is the source of truth for what still blocks a clean deploy.
+- Keep the list current: add items the moment you discover them, clear them the moment they resolve, and never let a gating item be silently forgotten. This list is the source of truth for what still blocks a clean deploy.
+- **Keep the file organized into exactly two sections — `## OPEN` first, then `## RESOLVED`** — the only two top-level (`##`) headings in it. Every item is its own `### <ID> — <headline>` block under one of them, newest OPEN at the top. When you clear one, **MOVE it rather than relabel it in place**: cut the block, text preserved verbatim, out of `## OPEN` and append it to the end of `## RESOLVED`; capture any still-live successor as its **own new** OPEN item instead of keeping the parent open. One ID lives in exactly one section.
 
 ## 3. The development loop (per slice)
 
@@ -62,11 +80,28 @@ The hardening list:
 - **Reversibility:** migrations and destructive operations ship with a *tested* rollback path. Never a one-way door without a way back.
 - **Adversarial testing:** actively try to break what you built — fault injection (kill the dependency mid-call, feed malformed responses, sever the network), boundary and fuzz inputs, and load beyond expected limits. A slice isn't done until it survives being attacked, not just being used correctly.
 
-## 6. Parallelization with subagents
+## 6. Parallel work with subagents — use them, under these rules
 
-- Spin up dev subagents to parallelize **only where the work is genuinely independent**, and never at the cost of quality or coherence.
-- Before parallelizing, **define the shared interfaces and contracts** so parallel work integrates cleanly. Partition by file/module ownership to avoid collisions. Keep dependent work sequential.
-- Designate **one integration owner** to reconcile parallel outputs, run the full suite on the merged result, and resolve conflicts. Parallel speed never justifies skipping the per-slice loop in Section 3.
+Spawning subagents (the Agent tool, `/code-review`, or the equivalent available to you) is **encouraged, not merely tolerated.** Wide reconnaissance, independent slices, adversarial attack passes, and fresh-context review are faster in parallel and often *better*, because each agent arrives without your assumptions. Reach for them whenever breadth is the bottleneck — and never in a way that can corrupt state or launder an unverified claim into a verified one.
+
+**Spawn for:**
+- **Reconnaissance (Section 1):** mapping the affected surface, tracing call paths, finding every caller of an interface you're about to change, reading a dependency's installed source to confirm a signature.
+- **Genuinely independent slices** — but only after Section 1's interfaces and contracts are defined, and only with **disjoint file/module ownership**. Dependent slices stay sequential.
+- **Adversarial and fault-injection testing (Section 5):** one agent per attack surface, each briefed to break what you built rather than to confirm it.
+- **Fresh-context review (Section 8):** an agent with no authoring context trying to find defects in the diff.
+
+**Do not spawn for:** work that depends on a slice still in flight; a task smaller than the cost of briefing an agent; anything needing conversation state only you hold; or splitting one coherent module across multiple authors.
+
+**Hard rules — these prevent the failures that actually happen:**
+
+1. **Define the interfaces and contracts first** (Section 1), then partition by file/module ownership. **One writer per file, always** — never two agents holding the same path. Agents that only need to look are **read-only**; say so in the brief.
+2. **You are the integration owner.** You reconcile parallel output, run the full suite on the *merged* result, and resolve conflicts. Parallel speed never justifies skipping Section 3's per-slice loop — every merged slice still earns its own green run, observed by you.
+3. **Namespace every scratch path, per agent.** Agents share a scratch directory. Identically-named temp files, logs, fixtures, and report files silently clobber each other and yield a plausible-looking garbage result — this has already happened. Give each agent a unique prefix or its own subdirectory, and tell it so.
+4. **Never run two builds, migrations, or test suites concurrently in the same working tree.** They race on build artifacts, lock files, fixed ports, shared databases, caches, and coverage output. Serialize them, or give each agent an isolated worktree with its own port and database name. Never point two agents at the same live database, external account, or shared device — and never at anything irreversible.
+5. **Never let a subagent write shared session state** — the session log, `memory/gating.md`, the session registry, or any reference file the parent session owns. Subagents have no lane and no ownership of those files. They **return findings to you**; you are the only writer.
+6. **A subagent's claim is not evidence.** Require the exact command it ran and the actual output. "Tests pass" without the run is unverified — either re-run it yourself or report it as unverified. Section 3's evidence bar applies to delegated work exactly as it applies to your own.
+7. **Brief each agent completely:** the goal, the files it may read and (if any) write, its scratch prefix, what to return and in what shape, and that **finding nothing is a valid and useful answer.** An agent left to guess its scope will invent one.
+8. **Bound the fan-out** to what you can actually reconcile — and then reconcile every result. Contradictory findings between agents are a signal to investigate, never something to average out or quietly drop.
 
 ## 7. Above all
 
@@ -79,7 +114,7 @@ After all slices are complete:
 1. **Promotion is a trigger, not a rubber stamp.** Any path built lightweight (e.g. as a prototype) that is now crossing into production must have the full hardening and adversarial pass from Section 5 applied *before* it ships — no code reaches prod unhardened on the grounds that it started as an experiment.
 2. Run the **full test suite plus build, typecheck, and lint** — including the adversarial and fault-injection tests. All must be green.
 3. **Drive the real flow end-to-end at least once** — run the app, hit the endpoint, execute the actual user path, and observe the behavior. A green unit suite is not proof the feature works in the running system.
-4. For anything touching **money, auth, persistent data, or production**: have a **fresh-context reviewer** (a subagent with no authoring context, or /code-review) adversarially review the diff before it ships. The context that wrote the code is systematically biased when reviewing it; cost is never a reason to skip this.
+4. For anything touching **money, auth, persistent data, or production**: have a **fresh-context reviewer** (a subagent with no authoring context under Section 6's rules, or /code-review) adversarially review the diff before it ships. The context that wrote the code is systematically biased when reviewing it; cost is never a reason to skip this.
 5. Confirm the **GATING list contains nothing that blocks correctness** in the target environment.
 6. Summarize what is shipping and the deploy target — separating what was *demonstrated* (exercised by tests or runs you executed) from what is *inferred* (reasoned but not exercised).
 7. For anything irreversible or production-facing, get my **explicit go-ahead** before deploying, and confirm the rollback path is in place.

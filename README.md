@@ -21,11 +21,20 @@ e.g. `/go:fixthis the checkout total is off by a cent on multi-item carts`.
 In Claude Code (or Cowork):
 
 ```
-/plugin marketplace add bridgerider/claude-directives
+/plugin marketplace add https://github.com/bridgerider/claude-directives.git
 /plugin install go@claude-directives
 ```
 
-Then start a new session (or `/reload`) and type `/go:` — you'll see the five commands.
+Then run `/reload-plugins` (or start a new session) and type `/go:` — you'll see the five commands.
+
+> **Use the full HTTPS URL above — not the `bridgerider/claude-directives` shorthand.**
+> Claude Code clones GitHub `owner/repo` shorthand sources **over SSH by default**. On a machine
+> that has never connected to GitHub over SSH that fails immediately with
+> `No ED25519 host key is known for github.com` / `Host key verification failed`, and even after
+> you fix `known_hosts` an SSH clone still needs a GitHub SSH key — despite this repo being public.
+> The HTTPS URL needs neither. (The `.git` suffix matters: without it Claude Code treats the URL as
+> a link to a hosted `marketplace.json` rather than a repo to clone.) If you would rather keep using
+> the shorthand, set `CLAUDE_CODE_PLUGIN_PREFER_HTTPS=1` in your environment first.
 
 Requires Claude Code v2.1.100 or later (plugin system). Works on macOS, Linux, and Windows.
 
