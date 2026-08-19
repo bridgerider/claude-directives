@@ -234,5 +234,10 @@ pack, not the specimen.
   keeping its ID, so a later sibling hunt reads the record instead of
   re-litigating it. Under `## OPEN` it would be indistinguishable from a
   live blocker and would never leave.
+- **Every entry there carries an `Accepted:` line** saying affirmatively why
+  nothing is waiting on it — the mirror of `Blocks:`. Without it an entry would
+  qualify by mere omission, and moving an item across would be cheaper than
+  resolving it. Report both counts when you report gating items at all:
+  `gating: N open, accepted: P` — one number alone hides a migration.
 - Close by offering routes, not actions: /fixthis per error finding,
   /simplify for the cleanup tier. Make no changes yourself.
