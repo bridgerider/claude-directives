@@ -19,7 +19,7 @@ Fix the bug above under this directive. A fix that hides the symptom, that you c
 - Pin down **expected vs. actual** behavior precisely — that gap is your definition of done.
 - **Confirm the expected behavior is actually specified** (docs, tests, contract, commit/PR history, or my statement) — not assumed. Bug reports can be wrong. If "expected" is itself uncertain, **settle it from those sources before you touch code** — that is research you can do, not a blocker. Only when the sources genuinely don't contain the answer *and* it is a product call rather than a fact is it mine to make: ask me directly, then (Section 9).
 - **If the bug is intermittent**, establish a baseline reproduction rate first: run the reproduction N times and record failures/N. Without a baseline you cannot distinguish "fixed" from "got lucky."
-- If you can't reproduce it, do not guess-fix — and do not park it either. **"Not reproducible" is where the work starts, not a verdict.** Escalate deliberately: re-read the report for the exact version, build, OS, and environment; pull logs, stack traces, and the actual failing input; reconstruct the caller's *state* rather than the caller's summary; replay against the reported revision, not just the current one; instrument the suspect path; then push the harsh conditions a happy path hides — concurrency and ordering, cold cache, empty/oversized/malformed input, clock, timezone and locale, resource exhaustion, permission and network failure. Most irreproducible bugs are an unmatched precondition, not a mystery. This ladder parallelizes well (Section 8). Escalate to a **gating item (Section 9) only after you have genuinely exhausted it** and the missing piece is something only I or an external system can supply — and then ask for that one thing outright rather than filing it and moving on.
+- If you can't reproduce it, do not guess-fix — and do not park it either. **"Not reproducible" is where the work starts, not a verdict.** Escalate deliberately: re-read the report for the exact version, build, OS, and environment; pull logs, stack traces, and the actual failing input; reconstruct the caller's *state* rather than the caller's summary; replay against the reported revision, not just the current one; instrument the suspect path; then push the harsh conditions a happy path hides — concurrency and ordering, cold cache, empty/oversized/malformed input, clock, timezone and locale, resource exhaustion, permission and network failure. Most irreproducible bugs are an unmatched precondition, not a mystery. This ladder parallelizes well (Section 8). Before you start it, set yourself a concrete budget — a number of rungs or a wall-clock limit — and say what it is. **When the budget runs out, the result is a question to me, not an entry on a list:** bring the specific thing you need, everything you ruled out and how, and the one observation that would break the tie. Escalate to a **gating item (Section 9) only after you have genuinely exhausted the ladder**, the missing piece is something only I or an external system can supply, and I am genuinely unavailable to answer it.
 
 ## 2. Triage: incident vs. latent bug
 
@@ -53,6 +53,7 @@ Fix the bug above under this directive. A fix that hides the symptom, that you c
 - **For an intermittent bug**, the fix is verified only when the same N-run battery from Section 1 shows zero failures — never claim a nondeterministic bug fixed from a single green pass.
 - **Re-run the suite** (widen to the full suite when the change could ripple) to confirm no regression — a fix that breaks something else is not a fix.
 - **Adversarially probe** the fix: nearby inputs, boundaries, and the exact conditions that produced the bug, to confirm you fixed the *class* and not just the one case.
+- **The ledger is part of verification.** Before you report the fix verified, run Section 9's count. A fix that is green on tests and net-positive on open gates is not finished.
 
 ## 7. Close the gap
 
@@ -63,7 +64,7 @@ Fix the bug above under this directive. A fix that hides the symptom, that you c
   3. **Example-based regression test only** (the Section 3 floor) — acceptable alone only when the input domain is trivial or the cost of the higher rungs clearly exceeds the blast radius.
   For anything touching money, auth, or persistent-data mutation, rung 3 alone is never sufficient — reach rung 1 or 2.
   If rung 1 or 2 requires structural change beyond the minimal fix, land the minimal fix + regression test as its own verified commit *first*, then the class-prevention work as a separate commit. Never mix them in one diff.
-- **Hunt for siblings — then fix them.** Search the codebase for the same bug pattern elsewhere; bugs of a kind travel in packs, and fixing one while ignoring its twins is half a job. You already hold the diagnosis and the test pattern, so the marginal cost per sibling is small: **repair each one, with its own regression coverage**, as commits separate from the primary fix. The search itself parallelizes well — see Section 8. Defer a sibling only when repairing it is genuinely a different project (another subsystem, a structural refactor, or a change I would have to approve); then say so out loud and get my call rather than quietly filing it (Section 9).
+- **Hunt for siblings — then fix them.** Search the codebase for the same bug pattern elsewhere; bugs of a kind travel in packs, and fixing one while ignoring its twins is half a job. You already hold the diagnosis and the test pattern, so the marginal cost per sibling is small: **repair each one, with its own regression coverage**, as commits separate from the primary fix. The search itself parallelizes well — see Section 8. **Scope, not difficulty, is the only reason to stop.** A sibling in the same subsystem is repaired in this session, however many turn up — volume is precisely what Section 8's parallelism is for. A sibling that is genuinely a *different deliverable* (another subsystem, a structural refactor, or a change I would have to approve) is **proposed to me as its own named task in your summary, now** — a piece of work with a scope and an estimate, not a line on the gating list. "There were more of them than expected" is not a deferral reason.
 
 ## 8. Parallel work with subagents — use them, under these rules
 
@@ -101,6 +102,19 @@ Spawning subagents (the Agent tool, `/code-review`, or the equivalent available 
 
 If none of those four apply, it is not a gate. Finish it.
 
+**A problem you found yourself is not a gate — it is the rest of the task.**
+
+Most of what reaches a gating list never blocked anything. It is something *you* discovered while the work was going well: a review finding, a sibling defect, a residual left by a partial fix, a hardening item you chose not to build, a rung of the class-prevention ladder you did not climb. None of it arrived from outside. By definition you had the context, the access, and the diff in front of you — so **all four categories above fail, and it is not eligible for the list.**
+
+Put every such finding through two questions, in order, before it goes anywhere:
+
+1. **Does it pass the four-category test on its own merits?** Not "is it adjacent to a gate" — does *clearing it* need a decision only I can make, access you do not have, or an external party? If not, it is not a gate.
+2. **If it were fixed, would anything change?** If it cannot produce a wrong answer, lose or corrupt data, mislead a reader, or change a decision — then it is **not worth fixing and not worth recording as a blocker.** Give it one line in your summary and let it go. An entry nobody will ever act on is not documentation; it is a cost levied on every future reader of that file, and it will still be open a year from now.
+
+Everything that survives both questions is **fixed in this session, with its own verification.**
+
+Anything you are tempted to headline "residuals", "minor", "misc findings", "further hardening", or "all LOW" is this failure in its most recognisable form. A bundle is never a gate. Split it, fix what matters, drop what does not, and file none of it.
+
 **Prefer asking over filing.** If I am in the session and the blocker is (1), ask me the question directly, now — a parked item that one exchange would have answered is a failure of this directive, not a record of diligence. File it only when I am unavailable, or when the answer isn't needed for you to keep making real progress elsewhere.
 
 **Every filed item must carry three things, in the item itself:** what you actually tried and why each route failed; the **single specific** thing that would clear it; and who or what supplies that thing. An item missing any of the three is a shrug, not a gate.
@@ -111,9 +125,18 @@ For whatever legitimately remains:
 - Scaffold around each where possible, make the unresolved path **fail loudly** (never a silent no-op or fake success), and keep the list current — added on discovery, cleared the moment it resolves, never silently forgotten. This is the source of truth for what still blocks a clean fix.
 - **Keep the file organized into exactly two sections — `## OPEN` first, then `## RESOLVED`** — so a reader sees live blockers up top and closed ones never clutter them. Every item is its own `### <ID> — <headline>` block filed under one of those two headings; those are the only two top-level (`##`) sections in the file.
   - **New item** → add it under `## OPEN`, newest at the top of the section.
-  - **When you clear one, MOVE it, don't relabel it in place:** cut the whole block — text preserved verbatim — out of `## OPEN` and append it to the end of `## RESOLVED`. A gate counts as closed (fixed / done / won't-fix / superseded) even if it carries documented residuals; capture any still-live successor as its **own new** item under `## OPEN`, never by keeping the parent open.
+  - **When you clear one, MOVE it, don't relabel it in place:** cut the whole block — text preserved verbatim — out of `## OPEN` and append it to the end of `## RESOLVED`. A gate counts as closed (fixed / done / won't-fix / superseded) even if it carries documented residuals. **If a residual is still live when you close the parent, fix it now** — it is a finding, and the two questions above govern it. Open a successor item **only** if that residual passes the four-category test on its own; a successor is a new gate and the ledger below counts it like any other. Never split one item into several to record nuance — the item's own text is where nuance belongs.
   - **Still actionable** (needs a decision, a build, an operator go/no-go, or is parked/deferred) → it stays under `## OPEN`.
   - One ID lives in exactly one section — never duplicated across both, never left at `##`/top level outside the two sections.
+
+**The ledger — you may not finish a task by adding to the list.**
+
+Count the items under `## OPEN` before you start and again before you report done. **The second number must not exceed the first.** Finishing with more open gates than you started with means the task was not completed — it means work was moved onto a list instead of being done.
+
+- Every item **you** opened during this task is yours to close before you report done.
+- If you closed the one item I asked about and opened three doing it, **you have not delivered the fix, you have relocated it.** Go back and finish, or tell me plainly and immediately that you are handing me a net-negative result and why.
+- **Report the ledger in your summary**, always, in this form: `gating: N open before -> M open after`, then one line per item in the delta naming its disposition — fixed, dropped as no-consequence, asked, or filed under category 1-4.
+- The count may legitimately rise **only** for a category 1-3 item that I was told about **in this session** and chose to leave open. If I was in the session and you never asked me, filing was the wrong move and the ledger should show the ask instead.
 
 ## 10. Above all
 
@@ -122,7 +145,7 @@ For whatever legitimately remains:
 
 ## 11. Commit & deploy (gated, not automatic)
 
-1. For any fix touching **money, auth, persistent data, or production**: before commit, have a **fresh-context reviewer** (a subagent with no authoring context under Section 8's rules, or /code-review) adversarially attempt to refute the root-cause claim and find defects in the diff. The context that wrote a fix is systematically biased when reviewing it; cost is never a reason to skip this.
+1. For any fix touching **money, auth, persistent data, or production**: before commit, have a **fresh-context reviewer** (a subagent with no authoring context under Section 8's rules, or /code-review) adversarially attempt to refute the root-cause claim and find defects in the diff. The context that wrote a fix is systematically biased when reviewing it; cost is never a reason to skip this. **The review is a loop, not a report.** Its findings return to *you* and are dispositioned under Section 9's two questions before this gate closes — each one either fixed and re-verified, or dropped as no-consequence with the reason stated in your summary. **A finding is never filed as a gating item merely because a review produced it.** If one genuinely meets the four-category test, ask me about it now, in this session. **Re-run the review after any material fix** — a first-round finding list is not a result until a round comes back clean.
 2. **Commit atomically:** the fix and its regression test together, with a message that states the **root cause** — not "fix bug." Never commit a red state or secrets.
 3. Before deploy: **full suite + build + typecheck + lint green**, including the new regression test.
 4. Confirm the **GATING list contains nothing that blocks correctness** in the target environment.

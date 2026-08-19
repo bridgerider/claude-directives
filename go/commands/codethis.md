@@ -32,6 +32,19 @@ Execute the task above under this directive. **Accuracy and correctness outrank 
 
 If none of those four apply, it is not a gate. Build it.
 
+**A problem you found yourself is not a gate — it is the rest of the task.**
+
+Most of what reaches a gating list never blocked anything. It is something *you* discovered while the work was going well: a review finding, a defect in adjacent code, a residual left by a partial implementation, a hardening item you deliberately scoped out, an invariant you noticed was unenforced. None of it arrived from outside. By definition you had the context, the access, and the diff in front of you — so **all four categories above fail, and it is not eligible for the list.**
+
+Put every such finding through two questions, in order, before it goes anywhere:
+
+1. **Does it pass the four-category test on its own merits?** Not "is it adjacent to a gate" — does *clearing it* need a decision only I can make, access you do not have, or an external party? If not, it is not a gate.
+2. **If it were fixed, would anything change?** If it cannot produce a wrong answer, lose or corrupt data, mislead a reader, or change a decision — then it is **not worth fixing and not worth recording as a blocker.** Give it one line in your summary and let it go. An entry nobody will ever act on is not documentation; it is a cost levied on every future reader of that file, and it will still be open a year from now.
+
+Everything that survives both questions is **built or fixed in this session, with its own verification.**
+
+Anything you are tempted to headline "residuals", "minor", "misc findings", "further hardening", or "all LOW" is this failure in its most recognisable form. A bundle is never a gate. Split it, fix what matters, drop what does not, and file none of it.
+
 **Prefer asking over filing.** If I am in the session and the blocker is (1), ask me directly, now — a parked question that one exchange would have answered is a failure of this directive, not a record of diligence. File it only when I am unavailable, or when the answer isn't needed for you to keep making real progress on other slices.
 
 **Every filed item must carry three things, in the item itself:** what you actually tried and why each route failed; the **single specific** thing that would clear it; and who or what supplies that thing. An item missing any of the three is a shrug, not a gate.
@@ -41,7 +54,16 @@ For whatever legitimately remains:
 - Maintain a dedicated, **persistent GATING list** in the project's `memory/gating.md` (create it on the first gating item, update it in place — it must survive session end and context compaction).
 - For every gating item, **scaffold as far around it as possible**: build the surrounding code and define the interface at the boundary. The unimplemented path must **fail loudly** with an explicit, descriptive error — never a silent no-op, and never fake success.
 - Keep the list current: add items the moment you discover them, clear them the moment they resolve, and never let a gating item be silently forgotten. This list is the source of truth for what still blocks a clean deploy.
-- **Keep the file organized into exactly two sections — `## OPEN` first, then `## RESOLVED`** — the only two top-level (`##`) headings in it. Every item is its own `### <ID> — <headline>` block under one of them, newest OPEN at the top. When you clear one, **MOVE it rather than relabel it in place**: cut the block, text preserved verbatim, out of `## OPEN` and append it to the end of `## RESOLVED`; capture any still-live successor as its **own new** OPEN item instead of keeping the parent open. One ID lives in exactly one section.
+- **Keep the file organized into exactly two sections — `## OPEN` first, then `## RESOLVED`** — the only two top-level (`##`) headings in it. Every item is its own `### <ID> — <headline>` block under one of them, newest OPEN at the top. When you clear one, **MOVE it rather than relabel it in place**: cut the block, text preserved verbatim, out of `## OPEN` and append it to the end of `## RESOLVED`. **If a residual is still live when you close the parent, fix it now** — it is a finding, and the two questions above govern it. Open a successor item **only** if that residual passes the four-category test on its own; a successor is a new gate and the ledger below counts it like any other. Never split one item into several to record nuance — the item's own text is where nuance belongs. One ID lives in exactly one section.
+
+**The ledger — you may not finish a task by adding to the list.**
+
+Count the items under `## OPEN` before you start and again before you report done. **The second number must not exceed the first.** Finishing with more open gates than you started with means the task was not completed — it means work was moved onto a list instead of being done.
+
+- Every item **you** opened during this task is yours to close before you report done.
+- If you closed the one item I asked about and opened three doing it, **you have not delivered the work, you have relocated it.** Go back and finish, or tell me plainly and immediately that you are handing me a net-negative result and why.
+- **Report the ledger in your summary**, always, in this form: `gating: N open before -> M open after`, then one line per item in the delta naming its disposition — fixed, dropped as no-consequence, asked, or filed under category 1-4.
+- The count may legitimately rise **only** for a category 1-3 item that I was told about **in this session** and chose to leave open. If I was in the session and you never asked me, filing was the wrong move and the ledger should show the ask instead.
 
 ## 3. The development loop (per slice)
 
@@ -54,7 +76,7 @@ For each slice, in strict order:
 5. **Re-run the prior suite** to confirm nothing regressed. Widen to the full suite whenever the change could ripple beyond its immediate module.
 6. Only once everything is green: **commit** (atomic, descriptive message, no secrets, never commit a red or broken state), then move to the next slice.
 
-**Definition of done for a slice:** the new behavior works, its tests pass (including the adversarial ones), the existing suite still passes, no silent failure was introduced, and no existing functionality was broken.
+**Definition of done for a slice:** the new behavior works, its tests pass (including the adversarial ones), the existing suite still passes, no silent failure was introduced, no existing functionality was broken, and **the slice's gate ledger is net-zero or negative** — you did not close this slice by opening gates.
 
 ## 4. Architecture & quality
 
@@ -70,7 +92,7 @@ Treat resilience as a feature, not an afterthought — but match its **depth to 
 
 - **Full treatment, always — no exemption:** any operation that is irreversible, moves money, changes auth or permissions, or destroys/mutates persistent data. These get the complete list below every time — including **property-based or fuzz coverage of the input domain**, never example tests alone — regardless of whether the work is "just a prototype." There is no "it was only a prototype" escape hatch here.
 - **Pure logic:** correctness plus adversarial-input tests (invalid, malicious, boundary, empty, oversized) — and nothing more. Don't burden deterministic transforms with retry/idempotency machinery they can't use.
-- **The middle (most I/O, state, and external-service code):** apply the relevant items below as a **stated judgment call made inline** — name what you hardened, and what you deliberately left out and why. Don't reflexively armor everything; don't reflexively skip.
+- **The middle (most I/O, state, and external-service code):** apply the relevant items below as a **stated judgment call made inline** — name what you hardened, and what you deliberately left out and why. Don't reflexively armor everything; don't reflexively skip. Where you make that call, it is stated **inline in the code and once in your summary** — that is the entire record. A deliberate, reasoned hardening omission is a design decision, not a blocker, and it does not go on the gating list.
 
 The hardening list:
 
@@ -114,7 +136,7 @@ After all slices are complete:
 1. **Promotion is a trigger, not a rubber stamp.** Any path built lightweight (e.g. as a prototype) that is now crossing into production must have the full hardening and adversarial pass from Section 5 applied *before* it ships — no code reaches prod unhardened on the grounds that it started as an experiment.
 2. Run the **full test suite plus build, typecheck, and lint** — including the adversarial and fault-injection tests. All must be green.
 3. **Drive the real flow end-to-end at least once** — run the app, hit the endpoint, execute the actual user path, and observe the behavior. A green unit suite is not proof the feature works in the running system.
-4. For anything touching **money, auth, persistent data, or production**: have a **fresh-context reviewer** (a subagent with no authoring context under Section 6's rules, or /code-review) adversarially review the diff before it ships. The context that wrote the code is systematically biased when reviewing it; cost is never a reason to skip this.
+4. For anything touching **money, auth, persistent data, or production**: have a **fresh-context reviewer** (a subagent with no authoring context under Section 6's rules, or /code-review) adversarially review the diff before it ships. The context that wrote the code is systematically biased when reviewing it; cost is never a reason to skip this. **The review is a loop, not a report.** Its findings return to *you* and are dispositioned under Section 2's two questions before this gate closes — each one either fixed and re-verified, or dropped as no-consequence with the reason stated in your summary. **A finding is never filed as a gating item merely because a review produced it.** If one genuinely meets the four-category test, ask me about it now, in this session. **Re-run the review after any material fix** — a first-round finding list is not a result until a round comes back clean.
 5. Confirm the **GATING list contains nothing that blocks correctness** in the target environment.
 6. Summarize what is shipping and the deploy target — separating what was *demonstrated* (exercised by tests or runs you executed) from what is *inferred* (reasoned but not exercised).
 7. For anything irreversible or production-facing, get my **explicit go-ahead** before deploying, and confirm the rollback path is in place.

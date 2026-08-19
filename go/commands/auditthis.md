@@ -173,6 +173,16 @@ pack, not the specimen.
   - **PLAUSIBLE** — reasoned but not exercised; say what would confirm it
 - Drop or downgrade anything that survives neither. Three defensible errors
   outrank thirty maybes.
+- **Then apply the consequence test — CONFIRMED is not the same as worth
+  reporting.** For each surviving finding ask: if this were fixed, would
+  anything change? If it cannot produce a wrong answer, lose or corrupt
+  data, mislead a reader, or change a decision, it is not an error and
+  usually not a finding at all — say it in one line of the coverage
+  statement and let it go. A confirmed defect with no consequence still
+  costs every future reader their attention, and downstream it is exactly
+  the finding that gets parked on a gating list and never closed. Never
+  bundle several of these into one "residuals" or "all LOW" entry; that
+  bundle is the symptom, not a finding.
 
 ## 7. Report
 
@@ -211,7 +221,10 @@ pack, not the specimen.
   is its own `### <ID> — <headline>` block under one of them, newest OPEN
   at the top. When one clears, **MOVE it rather than relabel it**: cut the
   block, text preserved verbatim, from `## OPEN` to the end of
-  `## RESOLVED`; any still-live successor becomes its **own new** OPEN
-  item. One ID lives in exactly one section.
+  `## RESOLVED`. A still-live residual becomes its **own new** OPEN item
+  only if it is itself a blocker to auditing by the test above; otherwise
+  it is a finding and belongs in the report. Never split one item into
+  several to record nuance — the item's own text is where nuance belongs.
+  One ID lives in exactly one section.
 - Close by offering routes, not actions: /fixthis per error finding,
   /simplify for the cleanup tier. Make no changes yourself.
