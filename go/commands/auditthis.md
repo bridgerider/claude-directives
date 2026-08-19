@@ -239,5 +239,13 @@ pack, not the specimen.
   qualify by mere omission, and moving an item across would be cheaper than
   resolving it. Report both counts when you report gating items at all:
   `gating: N open, accepted: P` — one number alone hides a migration.
+- **An entry there may carry a `Trigger:`** — the condition that would end
+  the acceptance. There are three outcomes, not two: blocked, permanently
+  accepted, and *accepted for now*. A `Trigger:` does not relax the `Accepted:`
+  bar; it records what would revive the item. Count them in the ledger
+  (`accepted: P (R pending)`) — a trigger nobody re-reads is worse than none.
+- **A fourth outcome is not a file at all: it is work.** Something that blocks
+  nothing and that you simply intend to do belongs in the plan or backlog.
+  Forcing it into either file is how both become unreadable.
 - Close by offering routes, not actions: /fixthis per error finding,
   /simplify for the cleanup tier. Make no changes yourself.
