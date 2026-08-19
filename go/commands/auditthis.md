@@ -226,5 +226,13 @@ pack, not the specimen.
   it is a finding and belongs in the report. Never split one item into
   several to record nuance — the item's own text is where nuance belongs.
   One ID lives in exactly one section.
+- **Every item under `## OPEN` carries a `Blocks:` line** naming what it
+  holds up and who supplies the answer. If you cannot write that line it is
+  not a gate. An item that is true but blocks nothing — a known-unknown, an
+  accepted limitation, a defect judged not worth fixing, one whose trigger
+  was retired — goes to **`memory/accepted-limitations.md`**, verbatim and
+  keeping its ID, so a later sibling hunt reads the record instead of
+  re-litigating it. Under `## OPEN` it would be indistinguishable from a
+  live blocker and would never leave.
 - Close by offering routes, not actions: /fixthis per error finding,
   /simplify for the cleanup tier. Make no changes yourself.
