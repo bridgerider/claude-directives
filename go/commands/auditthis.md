@@ -244,8 +244,13 @@ pack, not the specimen.
   accepted, and *accepted for now*. A `Trigger:` does not relax the `Accepted:`
   bar; it records what would revive the item. Count them in the ledger
   (`accepted: P (R pending)`) — a trigger nobody re-reads is worse than none.
-- **A fourth outcome is not a file at all: it is work.** Something that blocks
-  nothing and that you simply intend to do belongs in the plan or backlog.
-  Forcing it into either file is how both become unreadable.
+- **There is no fourth destination, and none is needed here.** Something that
+  blocks nothing and that you have not accepted belongs in this audit's own
+  findings, with the route that would resolve it — the report is the record.
+  It does not go into either file, and it does not go into a passing remark:
+  **a suggestion voiced in prose and left there is not a finding.** If you
+  would not give it its own heading with a stated consequence, it did not
+  survive the "would anything change" question, and it is a drop. Say so in
+  one line rather than leaving it implied.
 - Close by offering routes, not actions: /fixthis per error finding,
   /simplify for the cleanup tier. Make no changes yourself.
