@@ -32,12 +32,16 @@ source files. Route fixes to /fixthis (bugs) or /simplify (cleanups) afterward.
 
 Read project-specific code standards from:
   - <project-dir>/CLAUDE.md
-  - _context/domains.md (relevant domain section)
-  - _context/tech-stack.md
-  - Any domain context folders referenced in CLAUDE.md (e.g. _context-<domain>/)
+  - any workspace-level standards that CLAUDE.md points to — domain rules
+    (finance, legal, data, ...) and stack conventions — IF they exist. When
+    CLAUDE.md names a workspace root, read the root copy, never a
+    project-local one. If no such file exists, the floor is §5's own
+    checklist and the code-shape ceilings stated there: this audit is
+    complete without any external file.
+  - Any domain context folders referenced in CLAUDE.md
   - Any CLAUDE.md files found in the directories containing the files being
-    audited (e.g., if auditing scripts/b03_seo/run.py, also read
-    scripts/b03_seo/CLAUDE.md)
+    audited (e.g., if auditing scripts/<module>/run.py, also read
+    scripts/<module>/CLAUDE.md)
   - <project-dir>/memory/gating.md if it exists — known gaps are context,
     not fresh findings; don't re-report them as discoveries
   - Prior audit reports in output/ (*_code-audit*.md) — flag repeat findings
@@ -50,6 +54,12 @@ linter, typechecker, test suite, build — in **read-only** fashion (no fixes,
 no config changes). Don't hand-audit what a tool proves in seconds.
 - Tool output is evidence: findings confirmed by a failing tool run enter
   the report as CONFIRMED with the output quoted.
+- **Run a file-length check even when the project configures none.** Any
+  source or test file over 800 lines is a **warning** finding; over 500 is
+  a suggestion. `wc -l` is sufficient. No ruff rule covers file length, so
+  this is the one machine check a project's own toolchain cannot supply,
+  and the check that would have caught a 13,427-line module every other
+  tool passed.
 - **Try before you log it.** "The command wasn't on PATH" is not a
   coverage gap, it's a wrong invocation. Within read-only means: find the
   project's actual test/lint/build command (CLAUDE.md, README, CI config,
@@ -144,6 +154,12 @@ Check for:
     unvalidated input at trust boundaries, auth/authz bypass
   - test-coverage gaps at the depth the tier above prescribes
   - unclear naming, redundancy, modularity violations (suggestions tier)
+  - code-shape ceilings — file 500 lines soft / 800 hard, function 50
+    statements, cyclomatic complexity 10, 5 positional arguments, source
+    and tests alike — a breach is a **warning**, backed by the line count
+    or the lint output, never a bare opinion. A module that mixes pure
+    logic with I/O (HTTP, DB, filesystem, clock, env) in the same file is
+    a suggestion: name the seam.
   - violations of the project conventions loaded in step 2
 
 **Hunt for siblings:** every confirmed defect pattern gets a codebase-wide
@@ -199,11 +215,26 @@ pack, not the specimen.
 - Save to <project-dir>/output/YYYY-MM-DD_code-audit.md (append scope slug
   when partial, e.g. 2026-07-13_code-audit_b03-seo.md). Never overwrite an
   existing report — append _v2, _v3.
+- **If you are a LANE session** (see step 8): drafts go to
+  output/drafts/{slug}/ and the final report takes the time in its prefix —
+  YYYY-MM-DD_HHMM_code-audit.md — so two concurrent lanes auditing the same
+  project on the same day cannot collide on one filename.
 
 ## 8. Update session memory
 
-- Append audit summary to memory-cowork.md: scope, severity counts,
-  report path, and any gating items logged.
+- Append the audit summary — scope, severity counts, report path, and any
+  gating items logged — to **your session's log target**, which is NOT always
+  memory-cowork.md. If the workspace runs a session registry, check
+  `<project-dir>/.sessions/active.md` before writing: if you are registered
+  as a LANE, write to your own `.sessions/lane-{slug}.md` instead and never
+  touch memory-cowork.md; if the registry lists a LIVE session that is not
+  you — its `seen`, or `started` on an older line, under ~12 h — stop and
+  ask. A STALE line is NOT yours to remove or to write past: that call
+  belongs to the session-start protocol and to the user, because an
+  idle-but-alive session looks identical to a dead one by age. Report it and
+  write to your lane, or ask. No registry, or an empty one, means you are the
+  only session: write the log normally. A directive that ignores this
+  corrupts the shared log of whichever project it runs in.
 - **Audit findings are not gating items.** A defect you found belongs in
   the report and routes to /fixthis; parking it in gating.md hides it from
   the person who asked for the audit. Only a **blocker to auditing** goes

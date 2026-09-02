@@ -15,6 +15,7 @@ Fix the bug above under this directive. A fix that hides the symptom, that you c
 
 ## 1. Reproduce before anything else
 
+- **First establish which project you are in and load its conventions.** If the workspace runs a session protocol, the project is the one this session registered with; otherwise it is the working directory — and if that is ambiguous, ask rather than guess, because a workspace root can hold many projects and fixing the wrong one's code or writing its `memory/gating.md` is silent damage. Then read `<project-dir>/CLAUDE.md`, any `CLAUDE.md` in the directories you are about to change, any workspace-level conventions file that `CLAUDE.md` points to (stack defaults, known gotchas such as timestamp traps — this directive is complete without one), and `<project-dir>/memory/gating.md`'s `## OPEN` section together with `accepted-limitations.md` if they exist — a "bug" already recorded as an accepted limitation is not a fresh discovery, and the record tells you what was already tried.
 - **Reproduce it reliably first.** A bug you can't reproduce is a bug you can't confirm fixed. Establish the exact inputs, state, environment, and steps that trigger it.
 - Pin down **expected vs. actual** behavior precisely — that gap is your definition of done.
 - **Confirm the expected behavior is actually specified** (docs, tests, contract, commit/PR history, or my statement) — not assumed. Bug reports can be wrong. If "expected" is itself uncertain, **settle it from those sources before you touch code** — that is research you can do, not a blocker. Only when the sources genuinely don't contain the answer *and* it is a product call rather than a fact is it mine to make: ask me directly, then (Section 9).
@@ -42,6 +43,14 @@ Fix the bug above under this directive. A fix that hides the symptom, that you c
 ## 5. Fix minimally and surgically
 
 - Change the **least code** that corrects the root cause. Resist refactoring, cleanup, or fixing adjacent issues while you're in there — that expands blast radius and muddies the diff. Note them separately instead.
+- **One exception, and it is ordered, not optional.** If the file that holds the root cause is
+  over the hard file ceiling — **800 lines, source or test** (500 is the soft ceiling; a
+  function is capped at 50 statements, complexity 10, 5 positional arguments — the same floor
+  /codethis states) — or the fix would carry it past it, split the file FIRST as a
+  behaviour-preserving commit with the existing suite green, then land the minimal fix as the
+  second commit — the same two-commit shape Section 7 uses for class-prevention work. The split
+  is in scope. A 13,000-line file is where the sibling hunt in Section 7 goes to die, so
+  leaving it intact is not the conservative choice.
 - Fix the **cause, not each symptom** it produced. One root cause often has several visible effects; correcting the cause should resolve them together.
 - Hold the normal quality bar: single responsibility, explicit interfaces, no duplicated logic, and **no silent failures** — fail loud, with context. Don't introduce a swallowed error while removing one.
 
@@ -122,6 +131,7 @@ Anything you are tempted to headline "residuals", "minor", "misc findings", "fur
 For whatever legitimately remains:
 
 - Maintain a dedicated, **persistent GATING list** in the project's `memory/gating.md` (create it on the first gating item, update it in place — it must survive session end and context compaction).
+- **Check `<project-dir>/.sessions/active.md` before writing it, if the workspace runs a session registry.** `memory/*.md` is owned by the `main` session: if you are registered as a LANE, write the item into your own `.sessions/lane-{slug}.md` as a proposal and never touch `memory/gating.md` — a lane edits no shared reference file. Resolve your role first: **no `.sessions/` directory, or a registry with no session lines, means you are the only session — write normally.** If a registry exists and you never registered in it, you are unregistered: say so and ask before writing any shared file. If another line is **LIVE** (its `seen`, or `started` on an older line, is under ~12 h), do not write `gating.md` — put the item in your lane if you have one, otherwise report it to the user and carry on with the fix. A **STALE** line is not yours to remove or to write past: that decision belongs to the session-start protocol and to the user — ask — because an idle-but-alive session is indistinguishable from a dead one by age. Two sessions writing one `gating.md` with no lock is the same corruption the lane system prevents for the session log.
 - Scaffold around each where possible, make the unresolved path **fail loudly** (never a silent no-op or fake success), and keep the list current — added on discovery, cleared the moment it resolves, never silently forgotten. This is the source of truth for what still blocks a clean fix.
 - **Keep the file organized into exactly two sections — `## OPEN` first, then `## RESOLVED`** — so a reader sees live blockers up top and closed ones never clutter them. Every item is its own `### <ID> — <headline>` block filed under one of those two headings; those are the only two top-level (`##`) sections in the file.
   - **New item** → add it under `## OPEN`, newest at the top of the section.

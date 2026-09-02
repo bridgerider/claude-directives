@@ -13,6 +13,7 @@ Execute the task above under this directive. **Accuracy and correctness outrank 
 
 ## 1. Understand before you build
 
+- **Establish which project you are in, and load its conventions, before anything else.** If the workspace runs a session protocol, the project is the one this session registered with; otherwise it is the working directory — and if that is ambiguous, ask rather than guess, because a workspace root can hold many projects and writing to the wrong one's `memory/gating.md` or source tree is silent damage. Then read, in this order: `<project-dir>/CLAUDE.md`; any `CLAUDE.md` in the directories you are about to change (changing `scripts/<module>/run.py` means reading `scripts/<module>/CLAUDE.md` if it exists); any workspace-level conventions file that `CLAUDE.md` points to (stack defaults, known gotchas such as timestamp traps) — if there is none, Section 4's code-shape rules are the floor and this directive is complete without it; and `<project-dir>/memory/gating.md`'s `## OPEN` section plus `accepted-limitations.md` if they exist, so you do not rediscover a known gap as a fresh problem. Code written without the project's own conventions is rework, however correct it is in isolation.
 - Before writing any code, map the affected surface: read the relevant existing code, tests, interfaces, data models, and configuration. **Never modify code you haven't read.**
 - **Never code against a remembered API.** For any library or service call, verify the signature and behavior against the **installed version** — read the package's types/source or the docs for that pinned version. Version-check before building on a feature that may not exist in the release you're running.
 - Restate the goal in your own words, then decompose it into **vertical slices** — the thinnest end-to-end increments that each deliver independently testable behavior. Order them by dependency and risk.
@@ -52,6 +53,7 @@ Anything you are tempted to headline "residuals", "minor", "misc findings", "fur
 For whatever legitimately remains:
 
 - Maintain a dedicated, **persistent GATING list** in the project's `memory/gating.md` (create it on the first gating item, update it in place — it must survive session end and context compaction).
+- **Check `<project-dir>/.sessions/active.md` before writing it, if the workspace runs a session registry.** `memory/*.md` is owned by the `main` session: if you are registered as a LANE, write the item into your own `.sessions/lane-{slug}.md` as a proposal and never touch `memory/gating.md` — a lane edits no shared reference file. Resolve your role first: **no `.sessions/` directory, or a registry with no session lines, means you are the only session — write normally.** If a registry exists and you never registered in it, you are unregistered: say so and ask before writing any shared file. If another line is **LIVE** (its `seen`, or `started` on an older line, is under ~12 h), do not write `gating.md` — put the item in your lane if you have one, otherwise report it to the user and carry on with the fix. A **STALE** line is not yours to remove or to write past: that decision belongs to the session-start protocol and to the user — ask — because an idle-but-alive session is indistinguishable from a dead one by age. Two sessions writing one `gating.md` with no lock is the same corruption the lane system prevents for the session log.
 - For every gating item, **scaffold as far around it as possible**: build the surrounding code and define the interface at the boundary. The unimplemented path must **fail loudly** with an explicit, descriptive error — never a silent no-op, and never fake success.
 - Keep the list current: add items the moment you discover them, clear them the moment they resolve, and never let a gating item be silently forgotten. This list is the source of truth for what still blocks a clean deploy.
 - **Keep the file organized into exactly two sections — `## OPEN` first, then `## RESOLVED`** — the only two top-level (`##`) headings in it. Every item is its own `### <ID> — <headline>` block under one of them, newest OPEN at the top. When you clear one, **MOVE it rather than relabel it in place**: cut the block, text preserved verbatim, out of `## OPEN` and append it to the end of `## RESOLVED`. **If a residual is still live when you close the parent, fix it now** — it is a finding, and the two questions above govern it. Open a successor item **only** if that residual passes the four-category test on its own; a successor is a new gate and the ledger below counts it like any other. Never split one item into several to record nuance — the item's own text is where nuance belongs. One ID lives in exactly one section.
@@ -89,10 +91,83 @@ For each slice, in strict order:
 
 ## 4. Architecture & quality
 
-- Modular, single-responsibility components with explicit interfaces and no duplicated logic.
+- Modular, single-responsibility components with explicit interfaces and no duplicated logic —
+  **and the modules exist on disk, not just in the prose.** The code-shape rules below are
+  delivery requirements, not advice, and they apply to test files exactly as to source. A slice
+  that lands its logic in one file because that is where the previous slice put it has not met
+  this bullet. Before you extend a file, check its length: **if the change would carry it past
+  the hard ceiling, or it is already past it, split it first as its own behaviour-preserving
+  commit with the suite green, then land the change.** That split is the first slice of the
+  task, not unrelated refactoring and not a gate.
+- **Code shape — the floor. A project may tighten these; it may not loosen them silently.**
+  Tool names are Python's; the rules apply to every language. This directive is complete
+  without any external conventions file — if the workspace provides one, it may only add.
+  - **Layout.** Anything importable lives in `src/<package>/`, one module per concern. The
+    entry point (`cli.py` or `__main__.py`) parses arguments, wires dependencies, calls in,
+    and holds no logic. `tests/` mirrors the package: one test module per source module. A
+    utility script becomes a package the moment it has more than one responsibility or
+    crosses the ceiling — "it's only a tool" is how 13,000-line files happen.
+  - **Ceilings, source and test files alike.** File: 500 lines soft, 800 hard. Function: 50
+    statements. Cyclomatic complexity: 10. Positional arguments: 5. Ruff enforces the last
+    three (`C901`, `PLR0913`, `PLR0915`); no ruff rule covers file length, so count it
+    (`wc -l` is enough) as part of the lint step. A file already over the hard ceiling is not
+    grandfathered.
+  - **Functional core, imperative shell.** Pure transforms live in modules that import no I/O
+    (no HTTP, DB, filesystem, clock, or env reads). I/O sits at the edges and calls in. This is
+    the same split Section 5's tiers draw; keeping it on disk is what makes the pure tier
+    testable without mocks and the I/O tier small enough to harden by hand.
+  - **Boundaries carry types.** Public functions and records at module boundaries are fully
+    annotated; the type checker runs strict on `src/`. Tests may be looser.
+  - **Same commands everywhere.** Lint, format check, typecheck, and tests run in a pre-commit
+    hook and in CI on push. Section 8's gate is only as strong as the config it runs; a config
+    with no shape rules makes "lint green" vacuous.
+  - **Baseline config for a Python project** — create it if the project has none, tighten it
+    if it does. `DTZ` is included on purpose: it flags naive datetimes, a bug class that has
+    bitten before.
+
+    ```toml
+    [tool.ruff]
+    line-length = 100
+    target-version = "py311"
+    src = ["src", "tests"]
+
+    [tool.ruff.lint]
+    select = ["E", "F", "W", "I", "B", "UP", "S", "C90", "PL", "RUF", "SIM", "PTH", "DTZ"]
+    ignore = ["PLR2004"]   # magic-number comparisons: too noisy in tests and numeric code
+
+    [tool.ruff.lint.mccabe]
+    max-complexity = 10
+
+    [tool.ruff.lint.pylint]
+    max-args = 5
+    max-statements = 50
+    max-branches = 12
+
+    [tool.ruff.lint.per-file-ignores]
+    "tests/*" = ["S101", "PLR0913"]   # asserts; fixtures with many params
+
+    [tool.mypy]
+    python_version = "3.11"
+    strict = true
+    files = ["src"]
+
+    [[tool.mypy.overrides]]
+    module = "tests.*"
+    strict = false
+    check_untyped_defs = true
+
+    [tool.pytest.ini_options]
+    testpaths = ["tests"]
+    addopts = "--strict-markers -q --cov=src --cov-fail-under=80"
+    ```
+
+    Dev dependencies this assumes: `ruff`, `mypy`, `pytest`, `pytest-cov`, `hypothesis`.
+    Ruff format replaces black and isort; do not carry both.
 - **Make invalid states unrepresentable** where the language allows: tighter types, validating constructors, invariants enforced at trust boundaries. A state that can't be constructed is a bug class that can't ship — prefer this over re-validating the same rule at scattered call sites. Scale the effort to blast radius and state the judgment inline; don't build a type fortress around a throwaway script.
 - Reuse prior code when that is genuinely the cleaner path — but reuse by **extracting a shared unit**, not by copy-pasting copies that will drift apart.
-- Keep changes scoped to the task. Don't gold-plate, and don't refactor unrelated code without flagging it first.
+- Keep changes scoped to the task. Don't gold-plate, and don't refactor unrelated code without
+  flagging it first. A file you must touch that is over the ceiling is not unrelated code — the
+  split-before-extend rule above governs it, and it lands as its own prior commit.
 - **No silent failures anywhere.** Fail fast, propagate errors with context, log meaningfully. No swallowed exceptions, no bare catch-alls, no error paths that quietly return success, no TODO stubs that pretend to work.
 
 ## 5. Durability, hardening & adversarial testing
@@ -143,8 +218,8 @@ Spawning subagents (the Agent tool, `/code-review`, or the equivalent available 
 After all slices are complete:
 
 1. **Promotion is a trigger, not a rubber stamp.** Any path built lightweight (e.g. as a prototype) that is now crossing into production must have the full hardening and adversarial pass from Section 5 applied *before* it ships — no code reaches prod unhardened on the grounds that it started as an experiment.
-2. Run the **full test suite plus build, typecheck, and lint** — including the adversarial and fault-injection tests. All must be green.
-3. **Drive the real flow end-to-end at least once** — run the app, hit the endpoint, execute the actual user path, and observe the behavior. A green unit suite is not proof the feature works in the running system.
+2. Run the **full test suite plus build, typecheck, and lint** — including the adversarial and fault-injection tests. All must be green. **Run the repo's own structural checkers too, not just the language toolchain** — a gating-file linter if the repo ships one, the file-length count against Section 4's ceilings (`wc -l` is enough), and a commands linter if you touched the command set. If no such checker exists, the rules still hold: check them by hand and say so in the summary. A checker that only ever runs when someone remembers to type it is a known failure mode: the detector exists and fires, but nothing makes it fire.
+3. **Drive the real flow end-to-end at least once** — run the app, hit the endpoint, execute the actual user path, and observe the behavior. A green unit suite is not proof the feature works in the running system. Where the harness provides a `/run` skill that already knows how to launch this project, use it rather than reinventing the launch.
 4. For anything touching **money, auth, persistent data, or production**: have a **fresh-context reviewer** (a subagent with no authoring context under Section 6's rules, or /code-review) adversarially review the diff before it ships. The context that wrote the code is systematically biased when reviewing it; cost is never a reason to skip this. **The review is a loop, not a report.** Its findings return to *you* and are dispositioned under Section 2's two questions before this gate closes — each one either fixed and re-verified, or dropped as no-consequence with the reason stated in your summary. **A finding is never filed as a gating item merely because a review produced it.** If one genuinely meets the four-category test, ask me about it now, in this session. **Re-run the review after any material fix** — a first-round finding list is not a result until a round comes back clean.
 5. Confirm the **GATING list contains nothing that blocks correctness** in the target environment.
 6. Summarize what is shipping and the deploy target — separating what was *demonstrated* (exercised by tests or runs you executed) from what is *inferred* (reasoned but not exercised).
